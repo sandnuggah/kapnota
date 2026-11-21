@@ -464,6 +464,8 @@
         el.detalj.value = p.name;
         el.unit.value = p.unit;
       }
+      // Nollställ väljaren så att samma material kan väljas igen och skriva över egna ändringar.
+      e.target.value = '';
       sheetHandlers.onInput();
     });
   }
