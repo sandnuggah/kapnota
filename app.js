@@ -50,9 +50,15 @@
 
   // ---------- state ----------
   // Varje material från den publicerade prislistan har en nyckel så att listan kan synkas senare.
-  const FIRST_PRICE_VERSION = '2024-09-05';
   const priceKey = (p) => `${p.cat}|${p.name}|${p.thickness ?? ''}`;
   const defaultPrices = () => window.DEFAULT_PRICES.map((p) => ({ id: uid(), key: priceKey(p), ...p }));
+  // Kontrollsumma av den publicerade listans innehåll: ändras listan ändras summan.
+  function hostHash() {
+    const text = JSON.stringify(window.DEFAULT_PRICES.map((p) => [p.cat, p.name, p.thickness, p.price, p.unit]));
+    let h = 0x811c9dc5;
+    for (let i = 0; i < text.length; i++) h = Math.imul(h ^ text.charCodeAt(i), 0x01000193);
+    return (h >>> 0).toString(16);
+  }
   const newProject = () => ({
     id: uid(), produkt: '', namn: '', updated: Date.now(),
     rows: { massiv: [], skiv: [], faner: [], beslag: [] },
@@ -64,16 +70,17 @@
       if (s && Array.isArray(s.projects) && Array.isArray(s.prices)) {
         s.settings = { ...clone(DEFAULT_SETTINGS), ...s.settings };
         s.settings.markup = { ...DEFAULT_SETTINGS.markup, ...s.settings.markup };
-        if (!s.pricesVersion) {
+        if (!s.pricesHash) {
           // Data sparad innan synk fanns: koppla ihop raderna med den publicerade listan.
           const defs = new Map(window.DEFAULT_PRICES.map((d) => [priceKey(d), d]));
           s.prices.forEach((item) => {
             const d = defs.get(priceKey(item));
-            if (!d) return;
+            if (!d || item.key) return;
             item.key = priceKey(item);
             if (d.price !== item.price || d.unit !== item.unit) item.edited = true;
           });
-          s.pricesVersion = FIRST_PRICE_VERSION;
+          s.pricesHash = hostHash();
+          delete s.pricesVersion;
         }
         s.deletedKeys = s.deletedKeys || [];
         // Helt tomma kalkyler sparas inte mellan besöken.
@@ -83,7 +90,7 @@
       }
     } catch (e) { /* börja om med standardvärden */ }
     return {
-      prices: defaultPrices(), pricesVersion: window.PRICE_LIST_VERSION, deletedKeys: [],
+      prices: defaultPrices(), pricesHash: hostHash(), pricesSynced: Date.now(), deletedKeys: [],
       settings: clone(DEFAULT_SETTINGS), projects: [], currentId: null,
     };
   }
@@ -112,7 +119,7 @@
   systemDark.addEventListener('change', applyTheme);
 
   // ---------- price list sync ----------
-  const hasPriceUpdate = () => window.PRICE_LIST_VERSION !== state.pricesVersion;
+  const hasPriceUpdate = () => hostHash() !== state.pricesHash;
 
   // Hämtar in den publicerade listan. Egna ändringar, egna material och borttagna rader behålls.
   function syncPrices() {
@@ -135,12 +142,13 @@
         updated++;
       }
     });
-    state.pricesVersion = window.PRICE_LIST_VERSION;
+    state.pricesHash = hostHash();
+    state.pricesSynced = Date.now();
     save();
     return `Prislistan är uppdaterad: ${updated} ändrade, ${added} nya, ${removed} borttagna.`;
   }
 
-  // Laddar om prices.js från servern (förbi cachen) och ser om versionen har ändrats.
+  // Laddar om prices.js från servern (förbi cachen) och ser om innehållet har ändrats.
   function checkForPriceUpdate(manual) {
     const el = document.createElement('script');
     el.src = 'prices.js?t=' + Date.now();
@@ -278,7 +286,7 @@
   function viewPrices() {
     const update = hasPriceUpdate() ? `
       <div class="card notice"><div class="pad">
-        <strong>Ny prislista finns (${esc(window.PRICE_LIST_VERSION)})</strong>
+        <strong>Ny prislista finns</strong>
         <p class="muted">Dina egna ändringar och egna material behålls.</p>
         <button class="btn primary" data-act="sync-prices">Uppdatera prislistan</button>
       </div></div>` : '';
@@ -289,7 +297,7 @@
       <button class="btn primary" data-act="add-price">+ Lägg till material</button>
       <div id="plist"></div>
       <p class="muted">Alla priser är exklusive moms. Ändringar sparas lokalt och påverkar inte detaljer som redan lagts in i en kalkyl.</p>
-      <p class="muted">Prislistans version: ${esc(state.pricesVersion)}</p>
+      ${state.pricesSynced ? `<p class="muted">Prislistan hämtades ${new Date(state.pricesSynced).toLocaleDateString('sv-SE')}.</p>` : ''}
       <button class="btn" data-act="check-prices">Sök efter uppdatering</button>
       <button class="btn danger" data-act="reset-prices">Återställ standardpriser</button>`;
   }
@@ -539,7 +547,8 @@
     } else if (act === 'reset-prices') {
       return ask('Vill du återställa prislistan till standardpriserna? Dina ändringar försvinner.', 'Återställ', () => {
         state.prices = defaultPrices();
-        state.pricesVersion = window.PRICE_LIST_VERSION;
+        state.pricesHash = hostHash();
+        state.pricesSynced = Date.now();
         state.deletedKeys = [];
         priceNotice = '';
         save();
