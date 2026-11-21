@@ -1,0 +1,13 @@
+{
+  "name": "Kapnota",
+  "short_name": "Kapnota",
+  "lang": "sv",
+  "start_url": ".",
+  "display": "standalone",
+  "background_color": "#efe3cc",
+  "theme_color": "#2f6f4f",
+  "icons": [
+    { "src": "icon-512.png", "sizes": "512x512", "type": "image/png" },
+    { "src": "apple-touch-icon.png", "sizes": "180x180", "type": "image/png" }
+  ]
+}

@@ -1,0 +1,301 @@
+/* ---------- Themes ---------- */
+/* Kalkylblad (default) */
+:root {
+  --bg: #ffffff;
+  --card: #ffffff;
+  --card-border: 1px solid #b9c6bd;
+  --card-head-bg: #e9efe9;
+  --card-radius: 0px;
+  --text: #1c1c1c;
+  --muted: #666666;
+  --line: #d5dad6;
+  --row-line: 1px solid var(--line);
+  --accent: #2f6f4f;
+  --accent-text: #ffffff;
+  --danger: #b3261e;
+  --head-bg: #2f6f4f;
+  --head-text: #ffffff;
+  --head-size: 18px;
+  --total-bg: #f3f3f3;
+  --total-text: #1c1c1c;
+  --total-border: 2px solid #2f6f4f;
+  --input-bg: #ffffff;
+  --radius: 4px;
+  --font: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif;
+  --font-num: ui-monospace, "SF Mono", Menlo, Consolas, monospace;
+  --page-pad: 10px;
+  --row-pad: 8px 10px;
+  --card-gap: 10px;
+  --tabs-h: 60px;
+  --total-h: 64px;
+}
+
+/* Rent och enkelt */
+:root[data-theme="minimal"] {
+  --card: transparent;
+  --card-border: 0;
+  --card-head-bg: transparent;
+  --text: #111111;
+  --muted: #8a8a8e;
+  --line: #e2e2e4;
+  --accent: #0a66d8;
+  --head-bg: #ffffff;
+  --head-text: #111111;
+  --head-size: 28px;
+  --total-bg: #ffffff;
+  --total-text: #111111;
+  --total-border: 1px solid #e2e2e4;
+  --input-bg: #f4f4f6;
+  --radius: 10px;
+  --font-num: var(--font);
+  --page-pad: 20px;
+  --row-pad: 12px 0;
+  --card-gap: 24px;
+}
+
+/* Snickeri */
+:root[data-theme="woodshop"] {
+  --bg: #efe3cc;
+  --card: #f8f0de;
+  --card-border: 1.5px solid #4a3220;
+  --card-head-bg: transparent;
+  --card-radius: 4px;
+  --text: #3a2a1a;
+  --muted: #7a6245;
+  --line: #a68a64;
+  --row-line: 1px dashed var(--line);
+  --accent: #b5642a;
+  --accent-text: #fff4e2;
+  --danger: #9c2f1c;
+  --head-bg: #4a3220;
+  --head-text: #f3e6cf;
+  --head-size: 20px;
+  --total-bg: #4a3220;
+  --total-text: #f3e6cf;
+  --total-border: 0;
+  --input-bg: #fffaf0;
+  --font: "Iowan Old Style", Palatino, Georgia, "Times New Roman", serif;
+  --font-num: var(--font);
+  --page-pad: 14px;
+  --row-pad: 11px 12px;
+  --card-gap: 14px;
+}
+
+/* ---------- Dark mode (data-mode is set by app.js) ---------- */
+:root[data-mode="dark"] { color-scheme: dark; }
+
+:root[data-mode="dark"][data-theme="spreadsheet"] {
+  --bg: #151a17;
+  --card: #151a17;
+  --card-border: 1px solid #3a463f;
+  --card-head-bg: #212a25;
+  --text: #e6e9e6;
+  --muted: #9aa39d;
+  --line: #2e3732;
+  --accent: #6fbf96;
+  --accent-text: #0f1a14;
+  --danger: #ff8a80;
+  --head-bg: #1f4a35;
+  --head-text: #ffffff;
+  --total-bg: #1e2420;
+  --total-text: #e6e9e6;
+  --total-border: 2px solid #6fbf96;
+  --input-bg: #1e2420;
+}
+
+:root[data-mode="dark"][data-theme="minimal"] {
+  --bg: #111113;
+  --text: #f2f2f4;
+  --muted: #8e8e93;
+  --line: #2c2c2e;
+  --accent: #4c9aff;
+  --accent-text: #06182f;
+  --danger: #ff6b61;
+  --head-bg: #111113;
+  --head-text: #f2f2f4;
+  --total-bg: #111113;
+  --total-text: #f2f2f4;
+  --total-border: 1px solid #2c2c2e;
+  --input-bg: #1c1c1e;
+}
+
+:root[data-mode="dark"][data-theme="woodshop"] {
+  --bg: #1f1711;
+  --card: #2a1f17;
+  --card-border: 1.5px solid #8a6a4a;
+  --text: #f0e2c8;
+  --muted: #b59c7a;
+  --line: #6b533b;
+  --accent: #e0914f;
+  --accent-text: #24160c;
+  --danger: #ff9a80;
+  --head-bg: #120c08;
+  --head-text: #f3e6cf;
+  --total-bg: #120c08;
+  --total-text: #f3e6cf;
+  --total-border: 1.5px solid #8a6a4a;
+  --input-bg: #1a120c;
+}
+
+/* ---------- Base ---------- */
+* { box-sizing: border-box; }
+html { -webkit-text-size-adjust: 100%; }
+body {
+  margin: 0;
+  background: var(--bg);
+  color: var(--text);
+  font: 16px/1.4 var(--font);
+}
+button, input, select { font: inherit; color: inherit; }
+button { cursor: pointer; }
+
+#top {
+  position: sticky; top: 0; z-index: 5;
+  background: var(--head-bg); color: var(--head-text);
+  padding: calc(env(safe-area-inset-top) + 12px) var(--page-pad) 12px;
+}
+#top h1 { margin: 0 auto; max-width: 640px; font-size: var(--head-size); }
+
+main {
+  max-width: 640px; margin: 0 auto;
+  padding: var(--page-pad) var(--page-pad) calc(var(--tabs-h) + env(safe-area-inset-bottom) + 24px);
+}
+body.has-total main { padding-bottom: calc(var(--tabs-h) + var(--total-h) + env(safe-area-inset-bottom) + 24px); }
+
+/* Bottom navigation */
+#tabs {
+  position: fixed; left: 0; right: 0; bottom: 0; z-index: 6;
+  display: flex; background: var(--bg); border-top: 1px solid var(--line);
+  padding-bottom: env(safe-area-inset-bottom);
+}
+#tabs button {
+  flex: 1; height: var(--tabs-h); border: 0; background: none;
+  font-size: 12px; color: var(--muted);
+  display: flex; flex-direction: column; align-items: center; justify-content: center; gap: 2px;
+}
+#tabs .ico { font-size: 18px; line-height: 1; font-weight: 700; }
+#tabs button.active { color: var(--accent); font-weight: 600; }
+
+/* Total bar */
+#totalbar {
+  position: fixed; left: 0; right: 0; z-index: 6;
+  bottom: calc(var(--tabs-h) + env(safe-area-inset-bottom));
+  height: var(--total-h);
+  background: var(--total-bg); color: var(--total-text); border-top: var(--total-border);
+  display: flex; align-items: center; justify-content: space-around; gap: 12px; padding: 0 16px;
+}
+#totalbar[hidden] { display: none; }
+#totalbar div { display: flex; flex-direction: column; }
+#totalbar span { font-size: 12px; opacity: .75; }
+#totalbar strong { font-size: 18px; font-family: var(--font-num); font-variant-numeric: tabular-nums; }
+
+/* Cards and lists */
+.card {
+  background: var(--card); border: var(--card-border); border-radius: var(--card-radius);
+  margin-bottom: var(--card-gap); overflow: hidden;
+}
+.card > header {
+  display: flex; justify-content: space-between; align-items: baseline; gap: 12px;
+  padding: var(--row-pad); background: var(--card-head-bg); border-bottom: var(--card-border);
+}
+.card h2 { margin: 0; font-size: 16px; }
+.card .pad { padding: var(--row-pad); }
+.amount { font-family: var(--font-num); font-variant-numeric: tabular-nums; font-weight: 600; white-space: nowrap; }
+.muted { color: var(--muted); font-size: 14px; }
+.amount .muted { font-family: var(--font); font-weight: 400; }
+.empty { padding: var(--row-pad); color: var(--muted); font-size: 14px; }
+
+.row {
+  display: flex; width: 100%; text-align: left; gap: 12px; align-items: center;
+  padding: var(--row-pad); background: none; border: 0; border-bottom: var(--row-line);
+  min-height: 46px;
+}
+.row .main { flex: 1; min-width: 0; }
+.row .name, .row .sub { display: block; }
+.row .name { font-weight: 600; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+.row .sub { color: var(--muted); font-size: 13px; }
+.rowwrap { display: flex; border-bottom: var(--row-line); }
+.rowwrap .row { border-bottom: 0; }
+.rowwrap .x { border: 0; background: none; padding: 0 14px; color: var(--muted); font-size: 18px; }
+.card > :last-child, .card > .row:last-child { border-bottom: 0; }
+
+.sumline {
+  display: flex; justify-content: space-between; gap: 12px;
+  padding: var(--row-pad); padding-block: 5px; font-size: 14px; color: var(--muted);
+}
+.sumline.strong { color: var(--text); font-weight: 600; }
+.sumline span:last-child { font-family: var(--font-num); font-variant-numeric: tabular-nums; }
+
+.group-title {
+  margin: 18px 2px 6px; font-size: 13px; font-weight: 700; letter-spacing: .04em;
+  text-transform: uppercase; color: var(--muted);
+}
+
+/* Buttons */
+.btn {
+  display: block; width: 100%; min-height: 46px; padding: 10px 16px;
+  border-radius: var(--radius); border: 1px solid var(--line); background: var(--bg); font-weight: 600;
+}
+.btn.primary { background: var(--accent); color: var(--accent-text); border-color: var(--accent); }
+.btn.ghost { border: 0; background: none; color: var(--accent); }
+.btn.danger { color: var(--danger); }
+.btn + .btn { margin-top: 10px; }
+.card .btn.ghost { border-radius: 0; border-top: var(--row-line); }
+
+/* Forms */
+label { display: block; font-size: 13px; font-weight: 600; color: var(--muted); margin-bottom: 12px; }
+input, select {
+  display: block; width: 100%; margin-top: 4px; min-height: 44px; padding: 8px 12px;
+  border: 1px solid var(--line); border-radius: var(--radius); background: var(--input-bg);
+  font-size: 16px; font-weight: 400; color: var(--text);
+}
+input:focus, select:focus { outline: 2px solid var(--accent); outline-offset: 0; }
+.grid2 { display: grid; grid-template-columns: 1fr 1fr; gap: 10px; }
+.grid3 { display: grid; grid-template-columns: 1fr 1fr 1fr; gap: 10px; }
+.suffix { position: relative; }
+.suffix input { padding-right: 36px; }
+.suffix::after { content: "%"; position: absolute; right: 14px; bottom: 11px; color: var(--muted); }
+
+/* Bottom sheet */
+dialog {
+  position: fixed; inset: auto 0 0 0; margin: 0 auto; width: 100%; max-width: 640px;
+  max-height: 92dvh; overflow: auto; border: 0; border-radius: 14px 14px 0 0;
+  background: var(--bg); color: var(--text);
+  padding: 20px 16px calc(env(safe-area-inset-bottom) + 20px);
+}
+dialog::backdrop { background: rgba(0, 0, 0, .45); }
+dialog h2 { margin: 0 0 16px; font-size: 18px; }
+#confirm-msg { margin: 0 0 16px; font-size: 17px; font-weight: 600; }
+dialog .preview {
+  display: flex; justify-content: space-between; padding: 10px 12px; margin-bottom: 14px;
+  border: 1px solid var(--line); border-radius: var(--radius); font-weight: 600;
+  font-family: var(--font-num);
+}
+
+@media (min-width: 700px) {
+  dialog { inset: 0; margin: auto; border-radius: 14px; height: fit-content; }
+}
+
+/* ---------- Theme-specific touches ---------- */
+/* Kalkylblad: tight grid with row numbers feel */
+:root:not([data-theme]) .card h2,
+:root[data-theme="spreadsheet"] .card h2 { font-size: 15px; }
+
+/* Rent och enkelt: no boxes, quiet section labels, one big number */
+:root[data-theme="minimal"] #top { padding-top: calc(env(safe-area-inset-top) + 20px); }
+:root[data-theme="minimal"] .card > header { border-bottom: var(--row-line); padding-block: 6px; }
+:root[data-theme="minimal"] .card h2,
+:root[data-theme="minimal"] .card > header .amount { font-size: 13px; font-weight: 500; color: var(--muted); }
+:root[data-theme="minimal"] .group-title { text-transform: none; letter-spacing: 0; font-weight: 500; }
+:root[data-theme="minimal"] .row .name { font-weight: 500; }
+:root[data-theme="minimal"] .amount { font-weight: 500; }
+:root[data-theme="minimal"] .card .btn.ghost { text-align: left; padding-inline: 0; font-weight: 500; border-top: 0; }
+:root[data-theme="minimal"] #totalbar { justify-content: space-between; padding: 0 20px; }
+:root[data-theme="minimal"] #totalbar div:last-child strong { font-size: 22px; }
+:root[data-theme="minimal"] #totalbar div:first-child strong { font-weight: 500; }
+
+/* Snickeri: order-pad feel */
+:root[data-theme="woodshop"] .card > header { border-bottom: var(--card-border); }
+:root[data-theme="woodshop"] .card h2 { font-size: 17px; }
+:root[data-theme="woodshop"] #tabs { background: var(--card); border-top: var(--card-border); }
+:root[data-theme="woodshop"] .btn { font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif; }

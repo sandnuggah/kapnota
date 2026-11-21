@@ -1,0 +1,41 @@
+<!doctype html>
+<html lang="sv" data-theme="spreadsheet">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+  <meta name="theme-color" content="#2f6f4f">
+  <title>Kapnota</title>
+  <link rel="icon" href="favicon.svg" type="image/svg+xml">
+  <link rel="apple-touch-icon" href="apple-touch-icon.png">
+  <link rel="manifest" href="manifest.webmanifest">
+  <link rel="stylesheet" href="style.css">
+</head>
+<body>
+  <header id="top"><h1 id="title">Kapnota</h1></header>
+
+  <main id="view"></main>
+
+  <div id="totalbar" hidden>
+    <div><span>Totalpris</span><strong id="tot-ex"></strong></div>
+    <div><span id="tot-moms-label">Inkl. moms</span><strong id="tot-inc"></strong></div>
+  </div>
+
+  <nav id="tabs">
+    <button data-tab="kalkyler"><span class="ico">▤</span>Kalkyler</button>
+    <button data-tab="kalkyl"><span class="ico">✎</span>Kalkyl</button>
+    <button data-tab="prislista"><span class="ico">kr</span>Prislista</button>
+    <button data-tab="installningar"><span class="ico">%</span>Inställningar</button>
+  </nav>
+
+  <dialog id="sheet"><form method="dialog" id="sheet-form" autocomplete="off"></form></dialog>
+
+  <dialog id="confirm">
+    <p id="confirm-msg"></p>
+    <button class="btn primary" id="confirm-yes" type="button"></button>
+    <button class="btn" id="confirm-no" type="button">Avbryt</button>
+  </dialog>
+
+  <script src="prices.js"></script>
+  <script src="app.js"></script>
+</body>
+</html>
