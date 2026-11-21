@@ -49,7 +49,10 @@
   };
 
   // ---------- state ----------
-  const defaultPrices = () => window.DEFAULT_PRICES.map((p) => ({ id: uid(), ...p }));
+  // Varje material från den publicerade prislistan har en nyckel så att listan kan synkas senare.
+  const FIRST_PRICE_VERSION = '2024-09-05';
+  const priceKey = (p) => `${p.cat}|${p.name}|${p.thickness ?? ''}`;
+  const defaultPrices = () => window.DEFAULT_PRICES.map((p) => ({ id: uid(), key: priceKey(p), ...p }));
   const newProject = () => ({
     id: uid(), produkt: '', namn: '', updated: Date.now(),
     rows: { massiv: [], skiv: [], faner: [], beslag: [] },
@@ -61,18 +64,34 @@
       if (s && Array.isArray(s.projects) && Array.isArray(s.prices)) {
         s.settings = { ...clone(DEFAULT_SETTINGS), ...s.settings };
         s.settings.markup = { ...DEFAULT_SETTINGS.markup, ...s.settings.markup };
+        if (!s.pricesVersion) {
+          // Data sparad innan synk fanns: koppla ihop raderna med den publicerade listan.
+          const defs = new Map(window.DEFAULT_PRICES.map((d) => [priceKey(d), d]));
+          s.prices.forEach((item) => {
+            const d = defs.get(priceKey(item));
+            if (!d) return;
+            item.key = priceKey(item);
+            if (d.price !== item.price || d.unit !== item.unit) item.edited = true;
+          });
+          s.pricesVersion = FIRST_PRICE_VERSION;
+        }
+        s.deletedKeys = s.deletedKeys || [];
         // Helt tomma kalkyler sparas inte mellan besöken.
         s.projects = s.projects.filter((p) => p.produkt || p.namn || Object.values(p.rows).some((r) => r.length));
         if (!s.projects.some((p) => p.id === s.currentId)) s.currentId = s.projects[0] ? s.projects[0].id : null;
         return s;
       }
     } catch (e) { /* börja om med standardvärden */ }
-    return { prices: defaultPrices(), settings: clone(DEFAULT_SETTINGS), projects: [], currentId: null };
+    return {
+      prices: defaultPrices(), pricesVersion: window.PRICE_LIST_VERSION, deletedKeys: [],
+      settings: clone(DEFAULT_SETTINGS), projects: [], currentId: null,
+    };
   }
 
   const state = load();
   let tab = state.currentId ? 'kalkyl' : 'kalkyler';
   let priceFilter = '';
+  let priceNotice = '';
 
   function save() {
     try { localStorage.setItem(KEY, JSON.stringify(state)); } catch (e) { /* lagring ej tillgänglig */ }
@@ -91,6 +110,57 @@
     document.querySelector('meta[name="theme-color"]').content = dark ? theme.dark : theme.color;
   }
   systemDark.addEventListener('change', applyTheme);
+
+  // ---------- price list sync ----------
+  const hasPriceUpdate = () => window.PRICE_LIST_VERSION !== state.pricesVersion;
+
+  // Hämtar in den publicerade listan. Egna ändringar, egna material och borttagna rader behålls.
+  function syncPrices() {
+    const host = new Map(window.DEFAULT_PRICES.map((h) => [priceKey(h), h]));
+    let updated = 0, added = 0, removed = 0;
+    state.prices = state.prices.filter((item) => {
+      const gone = item.key && !item.edited && !host.has(item.key);
+      if (gone) removed++;
+      return !gone;
+    });
+    const local = new Map(state.prices.filter((item) => item.key).map((item) => [item.key, item]));
+    host.forEach((h, key) => {
+      const item = local.get(key);
+      if (!item) {
+        if (state.deletedKeys.includes(key)) return;
+        state.prices.push({ id: uid(), key, ...h });
+        added++;
+      } else if (!item.edited && (item.price !== h.price || item.unit !== h.unit)) {
+        Object.assign(item, h);
+        updated++;
+      }
+    });
+    state.pricesVersion = window.PRICE_LIST_VERSION;
+    save();
+    return `Prislistan är uppdaterad: ${updated} ändrade, ${added} nya, ${removed} borttagna.`;
+  }
+
+  // Laddar om prices.js från servern (förbi cachen) och ser om versionen har ändrats.
+  function checkForPriceUpdate(manual) {
+    const el = document.createElement('script');
+    el.src = 'prices.js?t=' + Date.now();
+    el.onload = () => {
+      el.remove();
+      if (manual) priceNotice = hasPriceUpdate() ? '' : 'Du har redan den senaste prislistan.';
+      if (manual || tab === 'prislista') render(); else updateBadge();
+    };
+    el.onerror = () => {
+      el.remove();
+      if (!manual) return;
+      priceNotice = 'Det gick inte att söka efter uppdateringar. Kontrollera anslutningen.';
+      render();
+    };
+    document.head.appendChild(el);
+  }
+
+  function updateBadge() {
+    document.querySelector('#tabs [data-tab="prislista"]').classList.toggle('has-update', hasPriceUpdate());
+  }
 
   // ---------- calculations ----------
   function rowSum(sec, r) {
@@ -121,6 +191,7 @@
     if (tab === 'prislista') { view.innerHTML = viewPrices(); renderPriceList(); }
     if (tab === 'installningar') view.innerHTML = viewSettings();
     updateTotals();
+    updateBadge();
   }
 
   function updateTotals() {
@@ -205,11 +276,21 @@
   }
 
   function viewPrices() {
+    const update = hasPriceUpdate() ? `
+      <div class="card notice"><div class="pad">
+        <strong>Ny prislista finns (${esc(window.PRICE_LIST_VERSION)})</strong>
+        <p class="muted">Dina egna ändringar och egna material behålls.</p>
+        <button class="btn primary" data-act="sync-prices">Uppdatera prislistan</button>
+      </div></div>` : '';
     return `
+      ${update}
+      ${priceNotice ? `<p class="muted notice-text">${esc(priceNotice)}</p>` : ''}
       <input id="price-search" type="search" placeholder="Sök material …" value="${esc(priceFilter)}" style="margin:0 0 12px">
       <button class="btn primary" data-act="add-price">+ Lägg till material</button>
       <div id="plist"></div>
       <p class="muted">Alla priser är exklusive moms. Ändringar sparas lokalt och påverkar inte detaljer som redan lagts in i en kalkyl.</p>
+      <p class="muted">Prislistans version: ${esc(state.pricesVersion)}</p>
+      <button class="btn" data-act="check-prices">Sök efter uppdatering</button>
       <button class="btn danger" data-act="reset-prices">Återställ standardpriser</button>`;
   }
 
@@ -398,10 +479,17 @@
           name: d.name.trim() || 'Namnlöst material', cat: d.cat,
           thickness: parseNum(d.thickness), price: parseNum(d.price) || 0, unit: d.unit,
         };
-        if (id) Object.assign(item, v); else state.prices.push({ id: uid(), ...v });
+        if (id) {
+          const changed = Object.keys(v).some((k) => v[k] !== item[k]);
+          if (item.key && changed) item.edited = true;
+          Object.assign(item, v);
+        } else {
+          state.prices.push({ id: uid(), ...v });
+        }
         save();
       },
       onDelete() {
+        if (item.key) state.deletedKeys.push(item.key);
         state.prices.splice(state.prices.indexOf(item), 1);
         save();
       },
@@ -413,6 +501,7 @@
     const b = e.target.closest('button[data-tab]');
     if (!b) return;
     tab = b.dataset.tab;
+    priceNotice = '';
     render();
     window.scrollTo(0, 0);
   });
@@ -425,6 +514,11 @@
     if (act === 'edit-row') return openRowSheet(sec, id);
     if (act === 'add-price') return openPriceSheet();
     if (act === 'edit-price') return openPriceSheet(id);
+    if (act === 'check-prices') return checkForPriceUpdate(true);
+    if (act === 'sync-prices') {
+      priceNotice = syncPrices();
+      return render();
+    }
 
     if (act === 'new-project') {
       const p = newProject();
@@ -445,6 +539,9 @@
     } else if (act === 'reset-prices') {
       return ask('Vill du återställa prislistan till standardpriserna? Dina ändringar försvinner.', 'Återställ', () => {
         state.prices = defaultPrices();
+        state.pricesVersion = window.PRICE_LIST_VERSION;
+        state.deletedKeys = [];
+        priceNotice = '';
         save();
         render();
       });
@@ -477,4 +574,5 @@
 
   applyTheme();
   render();
+  checkForPriceUpdate(false);
 })();
