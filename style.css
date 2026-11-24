@@ -176,11 +176,6 @@ body.has-total main { padding-bottom: calc(var(--tabs-h) + var(--total-h) + env(
 #tabs .ico { font-size: 18px; line-height: 1; font-weight: 700; }
 #tabs button.active { color: var(--accent); font-weight: 600; }
 
-#tabs button.has-update .ico::after {
-  content: ""; display: inline-block; width: 8px; height: 8px; margin-left: 2px;
-  border-radius: 50%; background: var(--danger); vertical-align: top;
-}
-
 /* Total bar */
 #totalbar {
   position: fixed; left: 0; right: 0; z-index: 6;
@@ -235,10 +230,6 @@ body.has-total main { padding-bottom: calc(var(--tabs-h) + var(--total-h) + env(
   margin: 18px 2px 6px; font-size: 13px; font-weight: 700; letter-spacing: .04em;
   text-transform: uppercase; color: var(--muted);
 }
-
-.notice { border-color: var(--accent); }
-.notice p { margin: 4px 0 12px; }
-.notice-text { margin: 0 0 12px; font-weight: 600; color: var(--text); }
 
 /* Buttons */
 .btn {

@@ -90,7 +90,7 @@
       }
     } catch (e) { /* börja om med standardvärden */ }
     return {
-      prices: defaultPrices(), pricesHash: hostHash(), pricesSynced: Date.now(), deletedKeys: [],
+      prices: defaultPrices(), pricesHash: hostHash(), deletedKeys: [],
       settings: clone(DEFAULT_SETTINGS), projects: [], currentId: null,
     };
   }
@@ -98,7 +98,6 @@
   const state = load();
   let tab = state.currentId ? 'kalkyl' : 'kalkyler';
   let priceFilter = '';
-  let priceNotice = '';
 
   function save() {
     try { localStorage.setItem(KEY, JSON.stringify(state)); } catch (e) { /* lagring ej tillgänglig */ }
@@ -118,57 +117,26 @@
   }
   systemDark.addEventListener('change', applyTheme);
 
-  // ---------- price list sync ----------
-  const hasPriceUpdate = () => hostHash() !== state.pricesHash;
-
-  // Hämtar in den publicerade listan. Egna ändringar, egna material och borttagna rader behålls.
+  // ---------- bundled price list ----------
+  // Prislistan följer med appen. Har den ändrats sedan sist läses den in när appen laddas.
+  // Egna ändringar, egna material och borttagna rader behålls.
   function syncPrices() {
     const host = new Map(window.DEFAULT_PRICES.map((h) => [priceKey(h), h]));
-    let updated = 0, added = 0, removed = 0;
-    state.prices = state.prices.filter((item) => {
-      const gone = item.key && !item.edited && !host.has(item.key);
-      if (gone) removed++;
-      return !gone;
-    });
+    state.prices = state.prices.filter((item) => !(item.key && !item.edited && !host.has(item.key)));
     const local = new Map(state.prices.filter((item) => item.key).map((item) => [item.key, item]));
     host.forEach((h, key) => {
       const item = local.get(key);
       if (!item) {
-        if (state.deletedKeys.includes(key)) return;
-        state.prices.push({ id: uid(), key, ...h });
-        added++;
-      } else if (!item.edited && (item.price !== h.price || item.unit !== h.unit)) {
+        if (!state.deletedKeys.includes(key)) state.prices.push({ id: uid(), key, ...h });
+      } else if (!item.edited) {
         Object.assign(item, h);
-        updated++;
       }
     });
     state.pricesHash = hostHash();
-    state.pricesSynced = Date.now();
+    delete state.pricesSynced;
     save();
-    return `Prislistan är uppdaterad: ${updated} ändrade, ${added} nya, ${removed} borttagna.`;
   }
-
-  // Laddar om prices.js från servern (förbi cachen) och ser om innehållet har ändrats.
-  function checkForPriceUpdate(manual) {
-    const el = document.createElement('script');
-    el.src = 'prices.js?t=' + Date.now();
-    el.onload = () => {
-      el.remove();
-      if (manual) priceNotice = hasPriceUpdate() ? '' : 'Du har redan den senaste prislistan.';
-      if (manual || tab === 'prislista') render(); else updateBadge();
-    };
-    el.onerror = () => {
-      el.remove();
-      if (!manual) return;
-      priceNotice = 'Det gick inte att söka efter uppdateringar. Kontrollera anslutningen.';
-      render();
-    };
-    document.head.appendChild(el);
-  }
-
-  function updateBadge() {
-    document.querySelector('#tabs [data-tab="prislista"]').classList.toggle('has-update', hasPriceUpdate());
-  }
+  if (hostHash() !== state.pricesHash) syncPrices();
 
   // ---------- calculations ----------
   function rowSum(sec, r) {
@@ -199,7 +167,6 @@
     if (tab === 'prislista') { view.innerHTML = viewPrices(); renderPriceList(); }
     if (tab === 'installningar') view.innerHTML = viewSettings();
     updateTotals();
-    updateBadge();
   }
 
   function updateTotals() {
@@ -284,21 +251,11 @@
   }
 
   function viewPrices() {
-    const update = hasPriceUpdate() ? `
-      <div class="card notice"><div class="pad">
-        <strong>Ny prislista finns</strong>
-        <p class="muted">Dina egna ändringar och egna material behålls.</p>
-        <button class="btn primary" data-act="sync-prices">Uppdatera prislistan</button>
-      </div></div>` : '';
     return `
-      ${update}
-      ${priceNotice ? `<p class="muted notice-text">${esc(priceNotice)}</p>` : ''}
       <input id="price-search" type="search" placeholder="Sök material …" value="${esc(priceFilter)}" style="margin:0 0 12px">
       <button class="btn primary" data-act="add-price">+ Lägg till material</button>
       <div id="plist"></div>
       <p class="muted">Alla priser är exklusive moms. Ändringar sparas lokalt och påverkar inte detaljer som redan lagts in i en kalkyl.</p>
-      ${state.pricesSynced ? `<p class="muted">Prislistan hämtades ${new Date(state.pricesSynced).toLocaleDateString('sv-SE')}.</p>` : ''}
-      <button class="btn" data-act="check-prices">Sök efter uppdatering</button>
       <button class="btn danger" data-act="reset-prices">Återställ standardpriser</button>`;
   }
 
@@ -511,7 +468,6 @@
     const b = e.target.closest('button[data-tab]');
     if (!b) return;
     tab = b.dataset.tab;
-    priceNotice = '';
     render();
     window.scrollTo(0, 0);
   });
@@ -524,11 +480,6 @@
     if (act === 'edit-row') return openRowSheet(sec, id);
     if (act === 'add-price') return openPriceSheet();
     if (act === 'edit-price') return openPriceSheet(id);
-    if (act === 'check-prices') return checkForPriceUpdate(true);
-    if (act === 'sync-prices') {
-      priceNotice = syncPrices();
-      return render();
-    }
 
     if (act === 'new-project') {
       const p = newProject();
@@ -550,9 +501,7 @@
       return ask('Vill du återställa prislistan till standardpriserna? Dina ändringar försvinner.', 'Återställ', () => {
         state.prices = defaultPrices();
         state.pricesHash = hostHash();
-        state.pricesSynced = Date.now();
         state.deletedKeys = [];
-        priceNotice = '';
         save();
         render();
       });
@@ -585,5 +534,4 @@
 
   applyTheme();
   render();
-  checkForPriceUpdate(false);
 })();

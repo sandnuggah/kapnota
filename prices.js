@@ -1,5 +1,5 @@
 // Standardpriser från Trätekniska prislistan 2024-09-05 (exkl. moms)
-// Ändra priserna här och publicera: appen märker själv att listan har ändrats.
+// Ändra priserna här och publicera: appen läser in den nya listan nästa gång den laddas.
 window.DEFAULT_PRICES = [
   {"cat": "skiv", "name": "Spånskiva", "thickness": 4, "price": 30, "unit": "m²"},
   {"cat": "skiv", "name": "Spånskiva", "thickness": 10, "price": 34, "unit": "m²"},
